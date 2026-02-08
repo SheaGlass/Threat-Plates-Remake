@@ -1,4 +1,4 @@
-# WoW SavedVariables (generated per-character, not part of addon source)
+# WoW SavedVariables
 ../../WTF/
 
 # OS files
@@ -6,12 +6,13 @@ Thumbs.db
 .DS_Store
 Desktop.ini
 
-# Editor files
+# Editor / IDE files
 *.swp
 *.swo
 *~
 .vscode/
 .idea/
+.cursor/
 *.sublime-project
 *.sublime-workspace
 
@@ -19,12 +20,5 @@ Desktop.ini
 .release/
 *.zip
 
-# AI / Claude Code working files
-.claude/
-.claudeignore
-.cursorrules
-.cursor/
-.aider*
-.copilot/
-CLAUDE.md
+# Local config & logs
 *.jsonl
