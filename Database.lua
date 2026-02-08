@@ -59,6 +59,7 @@ local DEFAULTS = {
                 fontFlags = "OUTLINE",
                 color = { r = 1, g = 1, b = 1, a = 1 },
                 show = true,
+                xOffset = 0,
                 yOffset = 2,
             },
 
@@ -74,6 +75,7 @@ local DEFAULTS = {
             enabled = true,
             width = 120,
             height = 10,
+            xOffset = 0,
             yOffset = -2,
             texture = "ThreatPlatesBar",
             backgroundColor = { r = 0.15, g = 0.15, b = 0.15, a = 0.85 },
@@ -107,6 +109,7 @@ local DEFAULTS = {
             maxAuras = 5,
             iconSize = 22,
             iconSpacing = 2,
+            xOffset = 0,
             yOffset = 14,
             showDuration = true,
             showStacks = true,
@@ -176,6 +179,43 @@ local DEFAULTS = {
         },
 
         -------------------------------------------------
+        -- Combo Points / Class Power
+        -------------------------------------------------
+        comboPoints = {
+            enabled = true,
+            anchorPoint = "TOP",  -- TOP, BOTTOM, INSIDE
+            xOffset = 0,
+            yOffset = 4,
+            iconSize = 8,
+            iconSpacing = 2,
+            showOnTargetOnly = true,
+            activeColor = { r = 1, g = 0.9, b = 0.2, a = 1 },
+            inactiveColor = { r = 0.3, g = 0.3, b = 0.3, a = 0.5 },
+            useClassColors = true,
+        },
+
+        -------------------------------------------------
+        -- Layout (absolute positions from nameplate center)
+        -- Two states: "default" (no cast) and "casting"
+        -------------------------------------------------
+        layout = {
+            default = {
+                healthbar   = { x = 0, y = 0 },
+                nameText    = { x = 0, y = 12 },
+                auras       = { x = 0, y = 26 },
+                castbar     = { x = 0, y = -12 },
+                comboPoints = { x = 0, y = -26 },
+            },
+            casting = {
+                healthbar   = { x = 0, y = 0 },
+                nameText    = { x = 0, y = 12 },
+                auras       = { x = 0, y = 26 },
+                castbar     = { x = 0, y = -12 },
+                comboPoints = { x = 0, y = -26 },
+            },
+        },
+
+        -------------------------------------------------
         -- Minimap Icon
         -------------------------------------------------
         minimap = {
@@ -184,7 +224,7 @@ local DEFAULTS = {
     },
 }
 
-local DB_VERSION = 7 -- Bump this when forced migration is needed
+local DB_VERSION = 10 -- Bump this when forced migration is needed
 
 function Addon:SetupDatabase()
     self.db = LibStub("AceDB-3.0"):New("ThreatPlatesRemakeDB", DEFAULTS, true)
@@ -227,26 +267,55 @@ function Addon:MigrateProfile()
     local p = self.db.profile
     if (p.dbVersion or 0) >= DB_VERSION then return end
 
-    -- v2+v6: Black inner border + white outer border (ThreatPlates classic style)
-    p.healthbar.borderSize = 1
-    p.healthbar.borderColor = { r = 0, g = 0, b = 0, a = 1 }
-    p.healthbar.outerBorderSize = 2
-    p.healthbar.outerBorderColor = { r = 1, g = 1, b = 1, a = 1 }
-    p.healthbar.missingHealthColor = { r = 0.05, g = 0.05, b = 0.05, a = 1 }
-    p.healthbar.backgroundColor = { r = 0.05, g = 0.05, b = 0.05, a = 1 }
-    p.healthbar.showText = false
-    p.healthbar.showLevel = false
-    p.healthbar.texture = "ThreatPlatesBar"
-    p.auras.filterMode = "ALL"
-    p.auras.durationFontSize = 8
-    p.auras.iconSize = 22
-    p.castbar.yOffset = -2
-    p.castbar.texture = "ThreatPlatesBar"
+    -- Helper: only set a value if it's currently nil (never overwrite user settings)
+    local function SetIfNil(tbl, key, val)
+        if tbl[key] == nil then tbl[key] = val end
+    end
 
-    -- v4: Force maxAuras, onlyMine
-    p.auras.maxAuras = 5
-    p.auras.onlyMine = true
-    p.auras.borderSize = 1
+    -- Ensure sub-tables exist
+    p.healthbar = p.healthbar or {}
+    p.castbar = p.castbar or {}
+    p.auras = p.auras or {}
+    p.threat = p.threat or {}
+    p.target = p.target or {}
+    p.general = p.general or {}
+
+    -- v2+v6: Border defaults (only set if missing)
+    SetIfNil(p.healthbar, "borderSize", 1)
+    if not p.healthbar.borderColor then p.healthbar.borderColor = { r = 0, g = 0, b = 0, a = 1 } end
+    SetIfNil(p.healthbar, "outerBorderSize", 2)
+    if not p.healthbar.outerBorderColor then p.healthbar.outerBorderColor = { r = 1, g = 1, b = 1, a = 1 } end
+    if not p.healthbar.missingHealthColor then p.healthbar.missingHealthColor = { r = 0.05, g = 0.05, b = 0.05, a = 1 } end
+    if not p.healthbar.backgroundColor then p.healthbar.backgroundColor = { r = 0.05, g = 0.05, b = 0.05, a = 1 } end
+    SetIfNil(p.healthbar, "showText", false)
+    SetIfNil(p.healthbar, "showLevel", false)
+    SetIfNil(p.healthbar, "texture", "ThreatPlatesBar")
+    SetIfNil(p.auras, "filterMode", "ALL")
+    SetIfNil(p.auras, "durationFontSize", 8)
+    SetIfNil(p.auras, "iconSize", 22)
+    SetIfNil(p.castbar, "yOffset", -2)
+    SetIfNil(p.castbar, "texture", "ThreatPlatesBar")
+
+    -- v4: Aura defaults
+    SetIfNil(p.auras, "maxAuras", 5)
+    SetIfNil(p.auras, "onlyMine", true)
+    SetIfNil(p.auras, "borderSize", 1)
+
+    -- v8: Initialize comboPoints settings if missing
+    if not p.comboPoints or type(p.comboPoints) ~= "table" then
+        p.comboPoints = {
+            enabled = true,
+            anchorPoint = "TOP",
+            xOffset = 0,
+            yOffset = 4,
+            iconSize = 8,
+            iconSpacing = 2,
+            showOnTargetOnly = true,
+            activeColor = { r = 1, g = 0.9, b = 0.2, a = 1 },
+            inactiveColor = { r = 0.3, g = 0.3, b = 0.3, a = 0.5 },
+            useClassColors = true,
+        }
+    end
 
     -- v7: Initialize nameText settings if missing
     if not p.healthbar.nameText or type(p.healthbar.nameText) ~= "table" then
@@ -277,6 +346,52 @@ function Addon:MigrateProfile()
     if not p.healthbar.font or p.healthbar.font == "" then p.healthbar.font = "Fritz Quadrata" end
     if not p.castbar.font or p.castbar.font == "" then p.castbar.font = "Fritz Quadrata" end
     if not p.auras.font or p.auras.font == "" then p.auras.font = "Fritz Quadrata" end
+
+    -- v10: Dual-state layout (default + casting)
+    -- Migrate from v9 flat layout or initialize fresh
+    if not p.layout or type(p.layout) ~= "table" then
+        p.layout = {}
+    end
+
+    -- Detect v9 flat layout (has element keys directly, no "default" sub-table)
+    local isFlat = p.layout.healthbar and not p.layout.default
+    if isFlat then
+        -- Copy flat positions into both states
+        local flat = {
+            healthbar   = p.layout.healthbar,
+            nameText    = p.layout.nameText,
+            auras       = p.layout.auras,
+            castbar     = p.layout.castbar,
+            comboPoints = p.layout.comboPoints,
+        }
+        p.layout = {
+            default = {},
+            casting = {},
+        }
+        for k, v in pairs(flat) do
+            p.layout.default[k] = { x = v.x or 0, y = v.y or 0 }
+            p.layout.casting[k] = { x = v.x or 0, y = v.y or 0 }
+        end
+    end
+
+    -- Ensure both state tables exist with all element keys
+    local defaultPositions = {
+        healthbar   = { x = 0, y = 0 },
+        nameText    = { x = 0, y = 12 },
+        auras       = { x = 0, y = 26 },
+        castbar     = { x = 0, y = -12 },
+        comboPoints = { x = 0, y = -26 },
+    }
+    for _, state in ipairs({"default", "casting"}) do
+        if not p.layout[state] or type(p.layout[state]) ~= "table" then
+            p.layout[state] = {}
+        end
+        for key, pos in pairs(defaultPositions) do
+            if not p.layout[state][key] then
+                p.layout[state][key] = { x = pos.x, y = pos.y }
+            end
+        end
+    end
 
     p.dbVersion = DB_VERSION
 end

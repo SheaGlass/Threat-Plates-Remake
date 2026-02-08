@@ -26,3 +26,4 @@ Modules\Castbar.lua
 Modules\Auras.lua
 Modules\Threat.lua
 Modules\Target.lua
+Modules\ComboPoints.lua
