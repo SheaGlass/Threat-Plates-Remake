@@ -50,7 +50,7 @@ function Addon:CreateCastBar(frame)
     -- Background / border (no BackdropTemplate — Midnight safe)
     local bg = CreateFrame("Frame", nil, frame.container)
     bg:SetSize(width + 2, height + 2)
-    bg:SetPoint("TOP", frame.healthbarBg, "BOTTOM", 0, yOffset)
+    -- Initial position set by LayoutElements() in Core.lua
     bg:SetFrameLevel(frame.container:GetFrameLevel() + 3)
 
     -- Border texture (1px black outline using a background texture)
@@ -195,6 +195,36 @@ function Addon:OnCastNotInterruptible(_, unitId)
 end
 
 ----------------------------------------------------------------------
+-- Resolve notInterruptible (may be secret in 12.0)
+-- In 12.0, notInterruptible from UnitCastingInfo is a secret boolean
+-- that can't be used in if/and/or. We keep the Blizzard nameplate's
+-- CastBar alive (alpha 0, events still registered) so it processes
+-- UNIT_SPELLCAST_START and updates its BorderShield. We read that
+-- shield's IsShown() to get a plain boolean.
+----------------------------------------------------------------------
+local function ResolveNotInterruptible(notInterruptible, plate)
+    if notInterruptible == nil then return false end
+
+    -- Method 1: Direct boolean check (works pre-12.0 when value isn't secret)
+    local ok, val = pcall(function() return notInterruptible and true or false end)
+    if ok then return val end
+
+    -- Method 2: Read from Blizzard nameplate's cast bar shield
+    -- (CastBar kept alive with alpha 0, still receives events)
+    if plate and plate.UnitFrame then
+        local blizzCB = plate.UnitFrame.castBar or plate.UnitFrame.CastBar
+        if blizzCB then
+            local shield = blizzCB.BorderShield or blizzCB.Shield
+            if shield and shield.IsShown then
+                return shield:IsShown()
+            end
+        end
+    end
+
+    return false
+end
+
+----------------------------------------------------------------------
 -- Update Casting Info (Plater pattern for Midnight 12.0)
 ----------------------------------------------------------------------
 function Addon:UpdateCastingInfo(unitId)
@@ -211,10 +241,13 @@ function Addon:UpdateCastingInfo(unitId)
 
     local bar = frame.castbar
 
+    -- Resolve interruptibility (secret-safe, reads Blizzard nameplate shield)
+    local isNotInterruptible = ResolveNotInterruptible(notInterruptible, plate)
+
     -- Set state
     bar.casting = true
     bar.channeling = false
-    bar.notInterruptible = notInterruptible
+    bar.notInterruptible = isNotInterruptible
     bar.lazyUpdateCooldown = 0
 
     -- Get duration object for Midnight
@@ -240,9 +273,23 @@ function Addon:UpdateCastingInfo(unitId)
     end
 
     -- Apply appearance
-    self:ApplyCastBarAppearance(bar, db, name, texture, notInterruptible)
+    self:ApplyCastBarAppearance(bar, db, name, texture, isNotInterruptible)
 
     frame.castbarBg:Show()
+    self:LayoutElements(frame)
+
+    -- Deferred re-check: Blizzard CastBar may not have processed the event
+    -- yet when our handler fires. Re-read the shield state next frame.
+    if IS_MIDNIGHT then
+        C_Timer.After(0, function()
+            if not bar.casting then return end
+            local newState = ResolveNotInterruptible(notInterruptible, plate)
+            if newState ~= isNotInterruptible then
+                bar.notInterruptible = newState
+                self:ApplyCastBarAppearance(bar, db, name, texture, newState)
+            end
+        end)
+    end
 end
 
 ----------------------------------------------------------------------
@@ -262,10 +309,13 @@ function Addon:UpdateChannelInfo(unitId)
 
     local bar = frame.castbar
 
+    -- Resolve interruptibility (secret-safe, reads Blizzard nameplate shield)
+    local isNotInterruptible = ResolveNotInterruptible(notInterruptible, plate)
+
     -- Set state
     bar.casting = false
     bar.channeling = true
-    bar.notInterruptible = notInterruptible
+    bar.notInterruptible = isNotInterruptible
     bar.lazyUpdateCooldown = 0
 
     -- Get duration object for Midnight
@@ -290,22 +340,30 @@ function Addon:UpdateChannelInfo(unitId)
     end
 
     -- Apply appearance
-    self:ApplyCastBarAppearance(bar, db, name, texture, notInterruptible)
+    self:ApplyCastBarAppearance(bar, db, name, texture, isNotInterruptible)
 
     frame.castbarBg:Show()
+    self:LayoutElements(frame)
+
+    -- Deferred re-check: Blizzard CastBar may not have processed the event
+    -- yet when our handler fires. Re-read the shield state next frame.
+    if IS_MIDNIGHT then
+        C_Timer.After(0, function()
+            if not bar.channeling then return end
+            local newState = ResolveNotInterruptible(notInterruptible, plate)
+            if newState ~= isNotInterruptible then
+                bar.notInterruptible = newState
+                self:ApplyCastBarAppearance(bar, db, name, texture, newState)
+            end
+        end)
+    end
 end
 
 ----------------------------------------------------------------------
 -- Apply Cast Bar Appearance (shared between cast and channel)
+-- notInterruptible is a resolved plain boolean (not secret)
 ----------------------------------------------------------------------
-function Addon:ApplyCastBarAppearance(bar, db, name, texture, notInterruptible)
-    -- Determine if interruptible (notInterruptible may be secret in 12.0)
-    local isNotInterruptible = false
-    if notInterruptible ~= nil then
-        local ok, val = pcall(function() return notInterruptible and true or false end)
-        if ok then isNotInterruptible = val end
-    end
-
+function Addon:ApplyCastBarAppearance(bar, db, name, texture, isNotInterruptible)
     -- Color based on interruptibility
     local color = isNotInterruptible and db.castbar.uninterruptibleColor or db.castbar.normalColor
     bar:SetStatusBarColor(color.r, color.g, color.b, 1)
@@ -376,6 +434,7 @@ function Addon:StopCastForFrame(frame)
     if frame.castbarBg then
         frame.castbarBg:Hide()
     end
+    self:LayoutElements(frame)
 end
 
 ----------------------------------------------------------------------

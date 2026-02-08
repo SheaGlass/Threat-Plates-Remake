@@ -16,7 +16,7 @@ function Addon:CreateAuraFrame(frame)
 
     local auraFrame = CreateFrame("Frame", nil, frame.container)
     auraFrame:SetSize(db.healthbar.width or 120, db.auras.iconSize or 20)
-    auraFrame:SetPoint("BOTTOM", frame.healthbarBg, "TOP", 0, db.auras.yOffset or 16)
+    -- Initial position set by LayoutElements() in Core.lua
     auraFrame:SetFrameLevel(frame.container:GetFrameLevel() + 5)
 
     -- Pre-create icon pool

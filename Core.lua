@@ -60,6 +60,10 @@ function Addon:OnEnable()
     self:RegisterEvent("UNIT_SPELLCAST_INTERRUPTIBLE", "OnCastInterruptible")
     self:RegisterEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE", "OnCastNotInterruptible")
 
+    -- Power events (combo points, holy power, chi, etc.)
+    self:RegisterEvent("UNIT_POWER_UPDATE", "OnPowerUpdate")
+    self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", "OnSpecChanged")
+
     -- Apply CVars for nameplate behavior
     self:ApplyCVars()
 
@@ -182,12 +186,13 @@ function Addon:CreateCustomFrame(plate)
     self:CreateAuraFrame(f)
     self:CreateThreatGlow(f)
     self:CreateTargetHighlight(f)
+    self:CreateComboPoints(f)
 
     -- Name text (UnitName returns secret for NPCs in 12.0, but SetText accepts secrets)
     local nt = db.healthbar.nameText or {}
     f.name = f.container:CreateFontString(nil, "OVERLAY")
     f.name:SetFont(TPR.ResolveFont(nt.font), nt.fontSize or 10, nt.fontFlags or "OUTLINE")
-    f.name:SetPoint("BOTTOM", f.healthbarBg, "TOP", 0, nt.yOffset or 2)
+    -- Initial position set by LayoutElements()
     local nc = nt.color or { r = 1, g = 1, b = 1, a = 1 }
     f.name:SetTextColor(nc.r, nc.g, nc.b, nc.a)
 
@@ -200,7 +205,7 @@ function Addon:CreateCustomFrame(plate)
     -- Raid icon
     f.raidIcon = f.container:CreateTexture(nil, "OVERLAY")
     f.raidIcon:SetSize(20, 20)
-    f.raidIcon:SetPoint("BOTTOM", f.name, "TOP", 0, 2)
+    -- Initial position set by LayoutElements()
     f.raidIcon:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
     f.raidIcon:Hide()
 
@@ -224,8 +229,7 @@ function Addon:ConfigureFrame(frame, unitId)
     -- Name text appearance (uses separate nameText settings)
     local nt = db.healthbar.nameText or {}
     frame.name:SetFont(TPR.ResolveFont(nt.font), nt.fontSize or 10, nt.fontFlags or "OUTLINE")
-    frame.name:ClearAllPoints()
-    frame.name:SetPoint("BOTTOM", frame.healthbarBg, "TOP", 0, nt.yOffset or 2)
+    -- Position set by LayoutElements() at end of ConfigureFrame
     local nc = nt.color or { r = 1, g = 1, b = 1, a = 1 }
     frame.name:SetTextColor(nc.r, nc.g, nc.b, nc.a)
 
@@ -323,6 +327,72 @@ function Addon:ConfigureFrame(frame, unitId)
 
     -- Target highlight
     self:UpdateTargetHighlight(frame, unitId)
+
+    -- Combo points
+    self:UpdateComboPoints(frame, unitId)
+
+    -- Auto-stack layout so elements don't overlap
+    self:LayoutElements(frame)
+end
+
+----------------------------------------------------------------------
+-- Layout Engine — auto-stacks elements so nothing overlaps
+-- Above health bar (bottom-up): combo points → name → auras
+-- Below health bar (top-down): cast bar → combo points (if BOTTOM)
+----------------------------------------------------------------------
+function Addon:LayoutElements(frame)
+    if not frame or not frame.healthbarBg then return end
+    local db = self.db.profile
+
+    -- Pick layout state: "casting" when cast bar is visible, "default" otherwise
+    local isCasting = frame.castbarBg and frame.castbarBg:IsShown()
+    local layoutTable = db.layout or {}
+    local L = isCasting and (layoutTable.casting or layoutTable.default) or (layoutTable.default or layoutTable)
+
+    -- All elements positioned absolutely from the nameplate container center.
+    -- Each element has its own x,y offset — fully independent, no stacking.
+    local anchor = frame.container
+
+    -- Health bar
+    local hb = L.healthbar or { x = 0, y = 0 }
+    frame.healthbarBg:ClearAllPoints()
+    frame.healthbarBg:SetPoint("CENTER", anchor, "CENTER", hb.x, hb.y)
+
+    -- Name text
+    local nt = db.healthbar.nameText or {}
+    if nt.show ~= false and frame.name and frame.name:IsShown() then
+        local nt_l = L.nameText or { x = 0, y = 12 }
+        frame.name:ClearAllPoints()
+        frame.name:SetPoint("CENTER", anchor, "CENTER", nt_l.x, nt_l.y)
+    end
+
+    -- Raid icon (always follows name text position, offset above it)
+    if frame.raidIcon and frame.raidIcon:IsShown() then
+        local nt_l = L.nameText or { x = 0, y = 12 }
+        frame.raidIcon:ClearAllPoints()
+        frame.raidIcon:SetPoint("BOTTOM", anchor, "CENTER", nt_l.x, nt_l.y + (nt.fontSize or 10))
+    end
+
+    -- Auras
+    if frame.auraFrame and db.auras.enabled then
+        local a_l = L.auras or { x = 0, y = 26 }
+        frame.auraFrame:ClearAllPoints()
+        frame.auraFrame:SetPoint("CENTER", anchor, "CENTER", a_l.x, a_l.y)
+    end
+
+    -- Cast bar
+    if frame.castbarBg and frame.castbarBg:IsShown() then
+        local cb_l = L.castbar or { x = 0, y = -12 }
+        frame.castbarBg:ClearAllPoints()
+        frame.castbarBg:SetPoint("CENTER", anchor, "CENTER", cb_l.x, cb_l.y)
+    end
+
+    -- Combo points
+    if frame.comboPoints and frame.comboPoints:IsShown() then
+        local cp_l = L.comboPoints or { x = 0, y = -26 }
+        frame.comboPoints:ClearAllPoints()
+        frame.comboPoints:SetPoint("CENTER", anchor, "CENTER", cp_l.x, cp_l.y)
+    end
 end
 
 ----------------------------------------------------------------------
@@ -367,8 +437,20 @@ function Addon:OnTargetChanged()
     for plate, frame in pairs(TPR.ActivePlates) do
         if frame.unitId then
             self:UpdateTargetHighlight(frame, frame.unitId)
+            self:UpdateComboPoints(frame, frame.unitId)
+            self:LayoutElements(frame)
         end
     end
+end
+
+function Addon:OnPowerUpdate(_, unitId)
+    if unitId == "player" then
+        self:UpdateAllComboPoints()
+    end
+end
+
+function Addon:OnSpecChanged()
+    self:RefreshPowerType()
 end
 
 ----------------------------------------------------------------------
@@ -454,13 +536,18 @@ local function SuppressBlizzardFrame(self)
         self:SetAlpha(0)
     end
 
-    -- Unregister events to stop Blizzard processing
+    -- Unregister events to stop Blizzard processing (but keep castBar
+    -- alive so we can read its shield state for interruptibility detection)
     self:UnregisterAllEvents()
-    if self.castBar then self.castBar:UnregisterAllEvents() end
 
     if CompactUnitFrame_UnregisterEvents then
         CompactUnitFrame_UnregisterEvents(self)
-        if self.castBar then CompactUnitFrame_UnregisterEvents(self.castBar) end
+    end
+
+    -- Hide the Blizzard cast bar visually but let it keep receiving events
+    -- so its BorderShield state updates (used by ResolveNotInterruptible)
+    if self.castBar then
+        self.castBar:SetAlpha(0)
     end
 end
 
@@ -519,6 +606,9 @@ function Addon:ShowBlizzardFrame(plate)
         managedPlates[tostring(unitFrame)] = nil
 
         unitFrame:SetAlpha(1)
+        if unitFrame.castBar then
+            unitFrame.castBar:SetAlpha(1)
+        end
         if not unitFrame:IsForbidden() then
             unitFrame:Show()
         end
