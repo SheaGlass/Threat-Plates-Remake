@@ -17,7 +17,6 @@ Desktop.ini
 
 # Packager output
 .release/
-.pkgmeta
 *.zip
 
 # AI / Claude Code working files
