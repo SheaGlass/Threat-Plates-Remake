@@ -2,7 +2,7 @@
 ## Title: ThreatPlates Remake
 ## Notes: Customizable nameplates with threat-based coloring, aura tracking, and ThreatPlates-style visuals. For issues / bugs: https://github.com/SheaGlass/Threat-Plates-Remake
 ## Author: Shea (iTek)
-## Version: 1.0.0
+## Version: 1.0.7
 ## SavedVariables: ThreatPlatesRemakeDB, ThreatPlatesRemakeCustomPresets
 ## OptionalDeps: Ace3, LibSharedMedia-3.0, LibDBIcon-1.0, LibCustomGlow-1.0, LibDeflate, LibDualSpec-1.0
 ## IconTexture: Interface\Addons\ThreatPlatesRemake\Artwork\Logo.tga
