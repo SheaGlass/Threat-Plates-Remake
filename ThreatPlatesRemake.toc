@@ -1,4 +1,4 @@
-## Interface: 120000
+## Interface: 120100
 ## Title: ThreatPlates Remake
 ## Notes: Customizable nameplates with threat-based coloring, aura tracking, and ThreatPlates-style visuals. For issues / bugs: https://github.com/SheaGlass/Threat-Plates-Remake
 ## Author: Shea (iTek)
