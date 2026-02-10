@@ -171,10 +171,13 @@ end
 function Addon:CreateCustomFrame(plate)
     local db = self.db.profile
 
-    local f = CreateFrame("Button", nil, plate)
+    local f = CreateFrame("Frame", nil, plate)
     f:SetAllPoints(plate)
     f:SetFrameStrata("LOW")
     f:SetFrameLevel(plate:GetFrameLevel() + 2)
+    f:EnableMouse(false)
+    f:SetMouseClickEnabled(false)
+    f:SetMouseMotionEnabled(false)
 
     -- Main container - positions relative to nameplate anchor
     f.container = CreateFrame("Frame", nil, f)
