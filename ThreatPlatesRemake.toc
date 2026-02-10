@@ -7,6 +7,7 @@
 ## OptionalDeps: Ace3, LibSharedMedia-3.0, LibDBIcon-1.0, LibCustomGlow-1.0, LibDeflate, LibDualSpec-1.0
 ## IconTexture: Interface\Addons\ThreatPlatesRemake\Artwork\Logo.tga
 ## Category: Unit Frames
+## X-Curse-Project-ID: 1456806
 
 # Libraries
 Libs\embeds.xml
