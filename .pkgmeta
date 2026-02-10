@@ -47,19 +47,19 @@ externals:
     url: https://repos.curseforge.com/wow/libsharedmedia-3-0/trunk/LibSharedMedia-3.0
     tag: latest
   Libs/LibDataBroker-1.1:
-    url: https://repos.curseforge.com/wow/libdatabroker-1-1/trunk
+    url: https://github.com/tekkub/libdatabroker-1-1
     tag: latest
   Libs/LibDBIcon-1.0:
     url: https://repos.curseforge.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0
     tag: latest
   Libs/LibDeflate:
-    url: https://repos.curseforge.com/wow/libdeflate/trunk
+    url: https://github.com/SafeteeWoW/LibDeflate
     tag: latest
   Libs/AceGUI-3.0-SharedMediaWidgets:
     url: https://repos.curseforge.com/wow/ace-gui-3-0-shared-media-widgets/trunk/AceGUI-3.0-SharedMediaWidgets
     tag: latest
   Libs/LibCustomGlow-1.0:
-    url: https://repos.curseforge.com/wow/libcustomglow/trunk
+    url: https://github.com/Stanzilla/LibCustomGlow
     tag: latest
 
 ignore:
