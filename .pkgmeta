@@ -1,5 +1,4 @@
 package-as: ThreatPlatesRemake
-curse-project-id: 1456806
 
 externals:
   Libs/LibStub:
