@@ -308,6 +308,431 @@ TPR.Presets = {
             },
         },
     },
+
+    --------------------------------------------------------------
+    -- Grey: Clean grey bars with threat-reactive coloring
+    -- White-grey default, orange warning, red aggro
+    -- Bright orange castbar, black box for uninterruptible
+    --------------------------------------------------------------
+    grey = {
+        name = "Grey",
+        desc = "Clean grey bars that shift to orange/red based on threat. Black uninterruptible castbar with white text.",
+        settings = {
+            healthbar = {
+                width = 120,
+                height = 10,
+                texture = "TP Flat",
+                borderSize = 1,
+                borderColor = { r = 0.15, g = 0.15, b = 0.15, a = 1 },
+                outerBorderSize = 0,
+                outerBorderColor = { r = 0, g = 0, b = 0, a = 0 },
+                backgroundColor = { r = 0.05, g = 0.05, b = 0.05, a = 0.95 },
+                missingHealthColor = { r = 0.05, g = 0.05, b = 0.05, a = 1 },
+                showText = false,
+                showLevel = false,
+                classColor = false,
+                reactionColor = false,
+                customFriendly = { r = 0.78, g = 0.8, b = 0.82 },   -- Light warm grey
+                customNeutral  = { r = 0.85, g = 0.82, b = 0.7 },   -- Warm beige grey
+                customHostile  = { r = 0.82, g = 0.82, b = 0.84 },   -- Clean white-grey
+                targetScale = 1.25,
+                nonTargetAlpha = 0.7,
+                fontSize = 9,
+                nameText = {
+                    font = "Fritz Quadrata",
+                    fontSize = 9,
+                    fontFlags = "OUTLINE",
+                    color = { r = 0.9, g = 0.9, b = 0.9, a = 1 },
+                    show = true,
+                    xOffset = 0,
+                    yOffset = 2,
+                },
+            },
+            castbar = {
+                enabled = true,
+                width = 120,
+                height = 10,
+                yOffset = -2,
+                texture = "TP Flat",
+                backgroundColor = { r = 0.05, g = 0.05, b = 0.05, a = 0.95 },
+                normalColor = { r = 1, g = 0.6, b = 0 },              -- Bright orange
+                uninterruptibleColor = { r = 0.08, g = 0.08, b = 0.08 }, -- Near black
+                showSpellName = true,
+                showTimer = true,
+                showIcon = true,
+                iconSize = 14,
+                fontSize = 8,
+                borderSize = 1,
+            },
+            auras = {
+                enabled = true,
+                showDebuffs = true,
+                showBuffs = false,
+                onlyMine = true,
+                maxAuras = 5,
+                iconSize = 20,
+                iconSpacing = 2,
+                yOffset = 12,
+                showDuration = true,
+                showStacks = true,
+                showCooldownSpiral = true,
+                durationFontSize = 8,
+                borderSize = 1,
+                borderColor = { r = 0.15, g = 0.15, b = 0.15, a = 1 },
+            },
+            threat = {
+                enabled = true,
+                useGlow = true,
+                useColorChange = true,
+                glowAlpha = 0.6,
+                dps = {
+                    safe   = { r = 0.82, g = 0.82, b = 0.84 },  -- White-grey (no threat)
+                    medium = { r = 1, g = 0.85, b = 0.3 },       -- Yellow-orange (gaining)
+                    high   = { r = 1, g = 0.5, b = 0 },          -- Orange (close to pulling)
+                    danger = { r = 1, g = 0.15, b = 0.1 },       -- Red (have aggro)
+                },
+                tank = {
+                    safe   = { r = 0.82, g = 0.82, b = 0.84 },  -- White-grey (solid aggro)
+                    medium = { r = 1, g = 0.85, b = 0.3 },       -- Yellow-orange (losing)
+                    high   = { r = 1, g = 0.5, b = 0 },          -- Orange (about to lose)
+                    danger = { r = 1, g = 0.15, b = 0.1 },       -- Red (lost aggro)
+                },
+            },
+            target = {
+                enabled = true,
+                scale = 1.25,
+                nonTargetAlpha = 0.65,
+                borderColor = { r = 1, g = 1, b = 1, a = 0.9 },
+            },
+        },
+    },
+
+    --------------------------------------------------------------
+    -- Neon: Vibrant glowing colors on dark background
+    --------------------------------------------------------------
+    neon = {
+        name = "Neon",
+        desc = "Vibrant neon colors on dark backgrounds with strong glow effects.",
+        settings = {
+            healthbar = {
+                width = 115,
+                height = 10,
+                texture = "TP Flat",
+                borderSize = 1,
+                borderColor = { r = 0.1, g = 0.1, b = 0.15, a = 1 },
+                outerBorderSize = 0,
+                outerBorderColor = { r = 0, g = 0, b = 0, a = 0 },
+                backgroundColor = { r = 0.03, g = 0.03, b = 0.06, a = 0.95 },
+                missingHealthColor = { r = 0.03, g = 0.03, b = 0.06, a = 1 },
+                showText = false,
+                showLevel = false,
+                classColor = false,
+                reactionColor = false,
+                customFriendly = { r = 0, g = 1, b = 0.6 },       -- Neon green
+                customNeutral  = { r = 1, g = 0.9, b = 0 },       -- Neon yellow
+                customHostile  = { r = 1, g = 0, b = 0.4 },       -- Neon pink-red
+                targetScale = 1.3,
+                nonTargetAlpha = 0.6,
+                fontSize = 8,
+                nameText = {
+                    font = "Fritz Quadrata",
+                    fontSize = 9,
+                    fontFlags = "OUTLINE",
+                    color = { r = 0.9, g = 0.95, b = 1, a = 1 },
+                    show = true,
+                    xOffset = 0,
+                    yOffset = 2,
+                },
+            },
+            castbar = {
+                enabled = true,
+                width = 115,
+                height = 8,
+                yOffset = -2,
+                texture = "TP Flat",
+                backgroundColor = { r = 0.03, g = 0.03, b = 0.06, a = 0.95 },
+                normalColor = { r = 0, g = 0.85, b = 1 },         -- Neon cyan
+                uninterruptibleColor = { r = 0.6, g = 0, b = 0.8 }, -- Neon purple
+                showSpellName = true,
+                showTimer = true,
+                showIcon = true,
+                iconSize = 12,
+                fontSize = 7,
+                borderSize = 1,
+            },
+            auras = {
+                enabled = true,
+                showDebuffs = true,
+                showBuffs = false,
+                onlyMine = true,
+                maxAuras = 5,
+                iconSize = 20,
+                iconSpacing = 2,
+                yOffset = 12,
+                showDuration = true,
+                showStacks = true,
+                showCooldownSpiral = true,
+                durationFontSize = 7,
+                borderSize = 1,
+                borderColor = { r = 0.1, g = 0.1, b = 0.15, a = 1 },
+            },
+            threat = {
+                enabled = true,
+                useGlow = true,
+                useColorChange = true,
+                glowAlpha = 0.9,
+                dps = {
+                    safe   = { r = 0, g = 1, b = 0.6 },
+                    medium = { r = 1, g = 1, b = 0 },
+                    high   = { r = 1, g = 0.4, b = 0 },
+                    danger = { r = 1, g = 0, b = 0.3 },
+                },
+                tank = {
+                    safe   = { r = 0, g = 1, b = 0.6 },
+                    medium = { r = 1, g = 1, b = 0 },
+                    high   = { r = 1, g = 0.4, b = 0 },
+                    danger = { r = 1, g = 0, b = 0.3 },
+                },
+            },
+            target = {
+                enabled = true,
+                scale = 1.3,
+                nonTargetAlpha = 0.5,
+                borderColor = { r = 0, g = 0.85, b = 1, a = 1 },
+            },
+        },
+    },
+
+    --------------------------------------------------------------
+    -- Dark: Subdued dark theme, low-profile
+    --------------------------------------------------------------
+    dark = {
+        name = "Dark",
+        desc = "Low-profile dark bars that stay out of your way. Class colors with muted tones.",
+        settings = {
+            healthbar = {
+                width = 110,
+                height = 9,
+                texture = "TP Gradient",
+                borderSize = 1,
+                borderColor = { r = 0, g = 0, b = 0, a = 1 },
+                outerBorderSize = 0,
+                outerBorderColor = { r = 0, g = 0, b = 0, a = 0 },
+                backgroundColor = { r = 0.03, g = 0.03, b = 0.03, a = 0.95 },
+                missingHealthColor = { r = 0.03, g = 0.03, b = 0.03, a = 1 },
+                showText = false,
+                showLevel = false,
+                classColor = true,
+                reactionColor = true,
+                targetScale = 1.2,
+                nonTargetAlpha = 0.5,
+                fontSize = 8,
+                nameText = {
+                    font = "Fritz Quadrata",
+                    fontSize = 9,
+                    fontFlags = "OUTLINE",
+                    color = { r = 0.7, g = 0.7, b = 0.7, a = 0.85 },
+                    show = true,
+                    xOffset = 0,
+                    yOffset = 2,
+                },
+            },
+            castbar = {
+                enabled = true,
+                width = 110,
+                height = 7,
+                yOffset = -1,
+                texture = "TP Gradient",
+                backgroundColor = { r = 0.03, g = 0.03, b = 0.03, a = 0.95 },
+                normalColor = { r = 0.85, g = 0.55, b = 0 },
+                uninterruptibleColor = { r = 0.35, g = 0.35, b = 0.35 },
+                showSpellName = true,
+                showTimer = false,
+                showIcon = true,
+                iconSize = 11,
+                fontSize = 7,
+                borderSize = 1,
+            },
+            auras = {
+                enabled = true,
+                showDebuffs = true,
+                showBuffs = false,
+                onlyMine = true,
+                maxAuras = 4,
+                iconSize = 18,
+                iconSpacing = 1,
+                yOffset = 10,
+                showDuration = true,
+                showStacks = true,
+                showCooldownSpiral = false,
+                durationFontSize = 7,
+                borderSize = 1,
+                borderColor = { r = 0, g = 0, b = 0, a = 1 },
+            },
+            threat = {
+                enabled = true,
+                useGlow = false,
+                useColorChange = true,
+                glowAlpha = 0.4,
+            },
+            target = {
+                enabled = true,
+                scale = 1.2,
+                nonTargetAlpha = 0.4,
+                borderColor = { r = 0.8, g = 0.8, b = 0.8, a = 0.5 },
+            },
+        },
+    },
+
+    --------------------------------------------------------------
+    -- Healer: Wide bars with health text, friendly plates emphasized
+    --------------------------------------------------------------
+    healer = {
+        name = "Healer",
+        desc = "Wide bars with health text and deficit display. Designed for healing with clear health visibility.",
+        settings = {
+            healthbar = {
+                width = 140,
+                height = 14,
+                texture = "ThreatPlatesBar",
+                borderSize = 1,
+                borderColor = { r = 0, g = 0, b = 0, a = 1 },
+                outerBorderSize = 1,
+                outerBorderColor = { r = 0.3, g = 0.3, b = 0.3, a = 1 },
+                backgroundColor = { r = 0.1, g = 0.1, b = 0.1, a = 0.95 },
+                missingHealthColor = { r = 0.15, g = 0.02, b = 0.02, a = 1 },
+                showText = true,
+                textFormat = "DEFICIT",
+                showLevel = false,
+                classColor = true,
+                reactionColor = true,
+                targetScale = 1.2,
+                nonTargetAlpha = 0.85,
+                fontSize = 10,
+                nameText = {
+                    font = "Fritz Quadrata",
+                    fontSize = 10,
+                    fontFlags = "OUTLINE",
+                    color = { r = 1, g = 1, b = 1, a = 1 },
+                    show = true,
+                    xOffset = 0,
+                    yOffset = 2,
+                },
+            },
+            castbar = {
+                enabled = true,
+                width = 140,
+                height = 10,
+                yOffset = -2,
+                texture = "ThreatPlatesBar",
+                normalColor = { r = 1, g = 0.7, b = 0 },
+                uninterruptibleColor = { r = 0.7, g = 0.7, b = 0.7 },
+                showSpellName = true,
+                showTimer = true,
+                showIcon = true,
+                iconSize = 14,
+                fontSize = 9,
+                borderSize = 1,
+            },
+            auras = {
+                enabled = true,
+                showDebuffs = true,
+                showBuffs = true,
+                onlyMine = false,
+                maxAuras = 6,
+                iconSize = 24,
+                iconSpacing = 2,
+                yOffset = 16,
+                showDuration = true,
+                showStacks = true,
+                showCooldownSpiral = true,
+                durationFontSize = 8,
+                borderSize = 1,
+            },
+            threat = {
+                enabled = true,
+                useGlow = true,
+                useColorChange = true,
+                glowAlpha = 0.6,
+            },
+            target = {
+                enabled = true,
+                scale = 1.2,
+                nonTargetAlpha = 0.85,
+                borderColor = { r = 0.2, g = 0.8, b = 1, a = 1 },
+            },
+        },
+    },
+
+    --------------------------------------------------------------
+    -- Striped: Textured bars with horizontal stripe pattern
+    --------------------------------------------------------------
+    striped = {
+        name = "Striped",
+        desc = "Textured bars with subtle horizontal stripes. A distinctive look with class colors.",
+        settings = {
+            healthbar = {
+                width = 125,
+                height = 12,
+                texture = "TP Striped",
+                borderSize = 1,
+                borderColor = { r = 0, g = 0, b = 0, a = 1 },
+                outerBorderSize = 1,
+                outerBorderColor = { r = 0.25, g = 0.25, b = 0.25, a = 1 },
+                backgroundColor = { r = 0.06, g = 0.06, b = 0.06, a = 0.95 },
+                missingHealthColor = { r = 0.06, g = 0.06, b = 0.06, a = 1 },
+                showText = false,
+                showLevel = true,
+                classColor = true,
+                reactionColor = true,
+                targetScale = 1.3,
+                nonTargetAlpha = 0.75,
+                fontSize = 9,
+            },
+            castbar = {
+                enabled = true,
+                width = 125,
+                height = 10,
+                yOffset = -2,
+                texture = "TP Striped",
+                normalColor = { r = 1, g = 0.65, b = 0 },
+                uninterruptibleColor = { r = 0.5, g = 0.5, b = 0.5 },
+                showSpellName = true,
+                showTimer = true,
+                showIcon = true,
+                iconSize = 14,
+                fontSize = 8,
+                borderSize = 1,
+            },
+            auras = {
+                enabled = true,
+                showDebuffs = true,
+                showBuffs = false,
+                onlyMine = true,
+                maxAuras = 5,
+                iconSize = 22,
+                iconSpacing = 2,
+                yOffset = 14,
+                showDuration = true,
+                showStacks = true,
+                showCooldownSpiral = true,
+                durationFontSize = 8,
+                borderSize = 1,
+            },
+            threat = {
+                enabled = true,
+                useGlow = true,
+                useColorChange = true,
+                glowAlpha = 0.7,
+            },
+            target = {
+                enabled = true,
+                scale = 1.3,
+                nonTargetAlpha = 0.7,
+                borderColor = { r = 1, g = 0.84, b = 0, a = 1 },
+            },
+        },
+    },
 }
 
 ----------------------------------------------------------------------
