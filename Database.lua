@@ -195,6 +195,17 @@ local DEFAULTS = {
         },
 
         -------------------------------------------------
+        -- Quest Icon
+        -------------------------------------------------
+        questIcon = {
+            enabled = true,
+            size = 24,
+            style = "classic",
+            position = "LEFT",
+            color = nil, -- nil = use texture's natural color
+        },
+
+        -------------------------------------------------
         -- Layout (absolute positions from nameplate center)
         -- Two states: "default" (no cast) and "casting"
         -------------------------------------------------
@@ -224,7 +235,7 @@ local DEFAULTS = {
     },
 }
 
-local DB_VERSION = 10 -- Bump this when forced migration is needed
+local DB_VERSION = 11 -- Bump this when forced migration is needed
 
 function Addon:SetupDatabase()
     self.db = LibStub("AceDB-3.0"):New("ThreatPlatesRemakeDB", DEFAULTS, true)
@@ -372,6 +383,20 @@ function Addon:MigrateProfile()
             p.layout.default[k] = { x = v.x or 0, y = v.y or 0 }
             p.layout.casting[k] = { x = v.x or 0, y = v.y or 0 }
         end
+    end
+
+    -- v11: Initialize questIcon settings if missing
+    if not p.questIcon or type(p.questIcon) ~= "table" then
+        p.questIcon = {
+            enabled = true,
+            size = 24,
+            style = "classic",
+            position = "LEFT",
+        }
+    else
+        -- Ensure new fields exist on existing profiles
+        if not p.questIcon.style then p.questIcon.style = "classic" end
+        if not p.questIcon.position then p.questIcon.position = "LEFT" end
     end
 
     -- Ensure both state tables exist with all element keys

@@ -3,6 +3,7 @@
 -- Custom cast bar on nameplates with interrupt indicators
 -- Updated for WoW Midnight (12.0) using Plater-proven patterns:
 --   SetTimerDuration() + UnitCastingDuration/UnitChannelDuration
+--   SetAlphaFromBoolean() + EvaluateColorValueFromBoolean() for secrets
 ----------------------------------------------------------------------
 local ADDON_NAME, TPR = ...
 local Addon = TPR.Addon
@@ -10,7 +11,6 @@ local Addon = TPR.Addon
 local FALLBACK_TEXTURE = "Interface\\TargetingFrame\\UI-StatusBar"
 local LSM = LibStub("LibSharedMedia-3.0", true)
 local IS_MIDNIGHT = (Enum and Enum.StatusBarInterpolation) and true or false
-
 
 local function ResolveTexture(key)
     if not key or key == "" then return FALLBACK_TEXTURE end
@@ -35,6 +35,25 @@ CastInfo.UnitChannelInfo = function(unit)
         return UnitChannelInfo(unit)
     end
     return nil
+end
+
+----------------------------------------------------------------------
+-- Secret-safe color helper (Plater/Details-Framework pattern)
+-- Uses C_CurveUtil.EvaluateColorValueFromBoolean to pick between
+-- two color values based on a potentially-secret boolean.
+-- When the boolean is plain, falls back to simple Lua branching.
+----------------------------------------------------------------------
+local function SetBarColorFromInterruptState(bar, notInterruptible, normalColor, uninterruptibleColor)
+    if IS_MIDNIGHT and C_CurveUtil and C_CurveUtil.EvaluateColorValueFromBoolean then
+        local r = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, uninterruptibleColor.r, normalColor.r)
+        local g = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, uninterruptibleColor.g, normalColor.g)
+        local b = C_CurveUtil.EvaluateColorValueFromBoolean(notInterruptible, uninterruptibleColor.b, normalColor.b)
+        bar:SetStatusBarColor(r, g, b, 1)
+    else
+        -- Pre-12.0 fallback: notInterruptible is a plain boolean
+        local color = notInterruptible and uninterruptibleColor or normalColor
+        bar:SetStatusBarColor(color.r, color.g, color.b, 1)
+    end
 end
 
 ----------------------------------------------------------------------
@@ -195,37 +214,12 @@ function Addon:OnCastNotInterruptible(_, unitId)
 end
 
 ----------------------------------------------------------------------
--- Resolve notInterruptible (may be secret in 12.0)
--- In 12.0, notInterruptible from UnitCastingInfo is a secret boolean
--- that can't be used in if/and/or. We keep the Blizzard nameplate's
--- CastBar alive (alpha 0, events still registered) so it processes
--- UNIT_SPELLCAST_START and updates its BorderShield. We read that
--- shield's IsShown() to get a plain boolean.
-----------------------------------------------------------------------
-local function ResolveNotInterruptible(notInterruptible, plate)
-    if notInterruptible == nil then return false end
-
-    -- Method 1: Direct boolean check (works pre-12.0 when value isn't secret)
-    local ok, val = pcall(function() return notInterruptible and true or false end)
-    if ok then return val end
-
-    -- Method 2: Read from Blizzard nameplate's cast bar shield
-    -- (CastBar kept alive with alpha 0, still receives events)
-    if plate and plate.UnitFrame then
-        local blizzCB = plate.UnitFrame.castBar or plate.UnitFrame.CastBar
-        if blizzCB then
-            local shield = blizzCB.BorderShield or blizzCB.Shield
-            if shield and shield.IsShown then
-                return shield:IsShown()
-            end
-        end
-    end
-
-    return false
-end
-
-----------------------------------------------------------------------
--- Update Casting Info (Plater pattern for Midnight 12.0)
+-- Update Casting Info (Plater/oUF pattern for Midnight 12.0)
+-- notInterruptible from UnitCastingInfo is a SECRET boolean in 12.0.
+-- We pass it directly to secret-aware APIs:
+--   SetAlphaFromBoolean() for shield visibility
+--   C_CurveUtil.EvaluateColorValueFromBoolean() for bar color
+-- UNIT_SPELLCAST_NOT_INTERRUPTIBLE events update with plain booleans.
 ----------------------------------------------------------------------
 function Addon:UpdateCastingInfo(unitId)
     local plate = TPR.NameplatesByUnit[unitId]
@@ -241,13 +235,13 @@ function Addon:UpdateCastingInfo(unitId)
 
     local bar = frame.castbar
 
-    -- Resolve interruptibility (secret-safe, reads Blizzard nameplate shield)
-    local isNotInterruptible = ResolveNotInterruptible(notInterruptible, plate)
+    -- Store the (possibly secret) notInterruptible value directly.
+    -- Do NOT use "or false" — that performs a boolean test on the secret.
+    bar.notInterruptible = notInterruptible
 
     -- Set state
     bar.casting = true
     bar.channeling = false
-    bar.notInterruptible = isNotInterruptible
     bar.lazyUpdateCooldown = 0
 
     -- Get duration object for Midnight
@@ -272,28 +266,15 @@ function Addon:UpdateCastingInfo(unitId)
         end
     end
 
-    -- Apply appearance
-    self:ApplyCastBarAppearance(bar, db, name, texture, isNotInterruptible)
+    -- Apply appearance using secret-safe APIs
+    self:ApplyCastBarAppearance(bar, db, name, texture, notInterruptible)
 
     frame.castbarBg:Show()
     self:LayoutElements(frame)
-
-    -- Deferred re-check: Blizzard CastBar may not have processed the event
-    -- yet when our handler fires. Re-read the shield state next frame.
-    if IS_MIDNIGHT then
-        C_Timer.After(0, function()
-            if not bar.casting then return end
-            local newState = ResolveNotInterruptible(notInterruptible, plate)
-            if newState ~= isNotInterruptible then
-                bar.notInterruptible = newState
-                self:ApplyCastBarAppearance(bar, db, name, texture, newState)
-            end
-        end)
-    end
 end
 
 ----------------------------------------------------------------------
--- Update Channel Info (Plater pattern for Midnight 12.0)
+-- Update Channel Info (Plater/oUF pattern for Midnight 12.0)
 ----------------------------------------------------------------------
 function Addon:UpdateChannelInfo(unitId)
     local plate = TPR.NameplatesByUnit[unitId]
@@ -309,13 +290,12 @@ function Addon:UpdateChannelInfo(unitId)
 
     local bar = frame.castbar
 
-    -- Resolve interruptibility (secret-safe, reads Blizzard nameplate shield)
-    local isNotInterruptible = ResolveNotInterruptible(notInterruptible, plate)
+    -- Store the (possibly secret) notInterruptible value directly.
+    bar.notInterruptible = notInterruptible
 
     -- Set state
     bar.casting = false
     bar.channeling = true
-    bar.notInterruptible = isNotInterruptible
     bar.lazyUpdateCooldown = 0
 
     -- Get duration object for Midnight
@@ -339,34 +319,24 @@ function Addon:UpdateChannelInfo(unitId)
         end
     end
 
-    -- Apply appearance
-    self:ApplyCastBarAppearance(bar, db, name, texture, isNotInterruptible)
+    -- Apply appearance using secret-safe APIs
+    self:ApplyCastBarAppearance(bar, db, name, texture, notInterruptible)
 
     frame.castbarBg:Show()
     self:LayoutElements(frame)
-
-    -- Deferred re-check: Blizzard CastBar may not have processed the event
-    -- yet when our handler fires. Re-read the shield state next frame.
-    if IS_MIDNIGHT then
-        C_Timer.After(0, function()
-            if not bar.channeling then return end
-            local newState = ResolveNotInterruptible(notInterruptible, plate)
-            if newState ~= isNotInterruptible then
-                bar.notInterruptible = newState
-                self:ApplyCastBarAppearance(bar, db, name, texture, newState)
-            end
-        end)
-    end
 end
 
 ----------------------------------------------------------------------
 -- Apply Cast Bar Appearance (shared between cast and channel)
--- notInterruptible is a resolved plain boolean (not secret)
+-- notInterruptible can be a SECRET boolean (from UnitCastingInfo) or
+-- a plain boolean (from UNIT_SPELLCAST_NOT_INTERRUPTIBLE event).
+-- Uses Blizzard's secret-aware APIs to handle both cases:
+--   SetAlphaFromBoolean() for shield visibility
+--   C_CurveUtil.EvaluateColorValueFromBoolean() for bar color
 ----------------------------------------------------------------------
-function Addon:ApplyCastBarAppearance(bar, db, name, texture, isNotInterruptible)
-    -- Color based on interruptibility
-    local color = isNotInterruptible and db.castbar.uninterruptibleColor or db.castbar.normalColor
-    bar:SetStatusBarColor(color.r, color.g, color.b, 1)
+function Addon:ApplyCastBarAppearance(bar, db, name, texture, notInterruptible)
+    -- Bar color: use secret-safe helper to pick between normal/uninterruptible
+    SetBarColorFromInterruptState(bar, notInterruptible, db.castbar.normalColor, db.castbar.uninterruptibleColor)
 
     -- Spell name (SetText accepts secret strings)
     if db.castbar.showSpellName then
@@ -393,11 +363,17 @@ function Addon:ApplyCastBarAppearance(bar, db, name, texture, isNotInterruptible
         if bar.iconBorderTex then bar.iconBorderTex:Hide() end
     end
 
-    -- Shield for uninterruptible
-    if isNotInterruptible then
+    -- Shield for uninterruptible (secret-safe)
+    if IS_MIDNIGHT and bar.shield.SetAlphaFromBoolean then
         bar.shield:Show()
+        bar.shield:SetAlphaFromBoolean(notInterruptible, 1, 0)
     else
-        bar.shield:Hide()
+        -- Pre-12.0 fallback: notInterruptible is a plain boolean
+        if notInterruptible then
+            bar.shield:Show()
+        else
+            bar.shield:Hide()
+        end
     end
 
     bar.spark:Show()
@@ -438,7 +414,9 @@ function Addon:StopCastForFrame(frame)
 end
 
 ----------------------------------------------------------------------
--- Update Interruptible State Mid-Cast
+-- Update Interruptible State Mid-Cast (from events, plain booleans)
+-- Called by UNIT_SPELLCAST_INTERRUPTIBLE / NOT_INTERRUPTIBLE events.
+-- These events pass plain boolean state (not secrets).
 ----------------------------------------------------------------------
 function Addon:UpdateCastInterruptState(unitId, isNotInterruptible)
     local plate = TPR.NameplatesByUnit[unitId]
@@ -453,6 +431,7 @@ function Addon:UpdateCastInterruptState(unitId, isNotInterruptible)
     local color
     if isNotInterruptible then
         color = db.castbar.uninterruptibleColor
+        bar.shield:SetAlpha(1)
         bar.shield:Show()
     else
         color = db.castbar.normalColor

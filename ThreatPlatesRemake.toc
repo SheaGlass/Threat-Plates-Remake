@@ -1,4 +1,4 @@
-## Interface: 120100
+## Interface: 120001
 ## Title: ThreatPlates Remake
 ## Notes: Customizable nameplates with threat-based coloring, aura tracking, and ThreatPlates-style visuals. For issues / bugs: https://github.com/SheaGlass/Threat-Plates-Remake
 ## Author: Shea (iTek)
@@ -28,3 +28,4 @@ Modules\Auras.lua
 Modules\Threat.lua
 Modules\Target.lua
 Modules\ComboPoints.lua
+Modules\QuestIcon.lua
