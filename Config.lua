@@ -1280,12 +1280,134 @@ local function GetOptions()
             },
 
             --------------------------------------------------------
+            -- QUEST ICON TAB
+            --------------------------------------------------------
+            questIcon = {
+                name = "Quest Icon",
+                type = "group",
+                order = 8,
+                args = {
+                    previewBtn = MakePreviewButton(-1),
+                    enabled = {
+                        name = "Enable Quest Icon",
+                        desc = "Show a quest indicator icon on nameplates for quest-related mobs.",
+                        type = "toggle",
+                        order = 0,
+                        width = "full",
+                        get = function() return db.questIcon.enabled end,
+                        set = function(_, val)
+                            db.questIcon.enabled = val
+                            Addon:RefreshAllPlates()
+                        end,
+                    },
+                    styleHeader = {
+                        name = "Style",
+                        type = "header",
+                        order = 5,
+                    },
+                    style = {
+                        name = "Icon Style",
+                        desc = "Choose the visual style of the quest indicator.",
+                        type = "select",
+                        order = 6,
+                        values = (function()
+                            local v = {}
+                            for _, s in ipairs(TPR.QuestIconStyles) do
+                                v[s.key] = s.name
+                            end
+                            return v
+                        end)(),
+                        get = function() return db.questIcon.style or "classic" end,
+                        set = function(_, val)
+                            db.questIcon.style = val
+                            Addon:RefreshAllPlates()
+                        end,
+                    },
+                    positionHeader = {
+                        name = "Position",
+                        type = "header",
+                        order = 8,
+                    },
+                    position = {
+                        name = "Icon Position",
+                        desc = "Where to place the quest icon relative to the health bar.",
+                        type = "select",
+                        order = 9,
+                        values = {
+                            LEFT = "Left",
+                            RIGHT = "Right",
+                            ABOVE = "Above",
+                            BELOW = "Below",
+                        },
+                        get = function() return db.questIcon.position or "LEFT" end,
+                        set = function(_, val)
+                            db.questIcon.position = val
+                            Addon:RefreshAllPlates()
+                        end,
+                    },
+                    sizeHeader = {
+                        name = "Size",
+                        type = "header",
+                        order = 10,
+                    },
+                    size = {
+                        name = "Icon Size",
+                        desc = "Size of the quest indicator icon in pixels.",
+                        type = "range",
+                        min = 8, max = 48, step = 1,
+                        order = 11,
+                        get = function() return db.questIcon.size end,
+                        set = function(_, val)
+                            db.questIcon.size = val
+                            Addon:RefreshAllPlates()
+                        end,
+                    },
+                    colorHeader = {
+                        name = "Color",
+                        type = "header",
+                        order = 15,
+                    },
+                    useCustomColor = {
+                        name = "Use Custom Color Tint",
+                        desc = "Apply a custom color tint to the quest icon. When disabled, the icon uses its natural colors.",
+                        type = "toggle",
+                        order = 16,
+                        get = function() return db.questIcon.color ~= nil end,
+                        set = function(_, val)
+                            if val then
+                                db.questIcon.color = { r = 1, g = 1, b = 0, a = 1 }
+                            else
+                                db.questIcon.color = nil
+                            end
+                            Addon:RefreshAllPlates()
+                        end,
+                    },
+                    color = {
+                        name = "Icon Color",
+                        desc = "Custom color tint for the quest icon.",
+                        type = "color",
+                        hasAlpha = true,
+                        order = 17,
+                        disabled = function() return db.questIcon.color == nil end,
+                        get = function()
+                            local c = db.questIcon.color or { r = 1, g = 1, b = 0, a = 1 }
+                            return c.r, c.g, c.b, c.a
+                        end,
+                        set = function(_, r, g, b, a)
+                            db.questIcon.color = { r = r, g = g, b = b, a = a }
+                            Addon:RefreshAllPlates()
+                        end,
+                    },
+                },
+            },
+
+            --------------------------------------------------------
             -- LAYOUT TAB (absolute positioning, dual state)
             --------------------------------------------------------
             layout = {
                 name = "Layout",
                 type = "group",
-                order = 8,
+                order = 9,
                 args = {
                     desc = {
                         name = "Position each element freely. All positions are pixel offsets from the nameplate center.\nTwo layout states: |cff00ff00Default|r (no cast) and |cffffaa00Casting|r (cast bar visible).",

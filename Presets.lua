@@ -147,6 +147,102 @@ TPR.Presets = {
     },
 
     --------------------------------------------------------------
+    -- Grey Minimal: Cool-toned slate/lavender/grey aesthetic
+    --------------------------------------------------------------
+    grey_minimal = {
+        name = "Grey - Minimal",
+        desc = "Sleek, muted look with cool blue-purple and grey tones. Ultra-clean with thin bars and no clutter.",
+        settings = {
+            healthbar = {
+                width = 110,
+                height = 8,
+                texture = "TP Flat",
+                borderSize = 1,
+                borderColor = { r = 0.2, g = 0.2, b = 0.25, a = 1 },
+                outerBorderSize = 0,
+                outerBorderColor = { r = 0, g = 0, b = 0, a = 0 },
+                backgroundColor = { r = 0.08, g = 0.08, b = 0.12, a = 0.95 },
+                missingHealthColor = { r = 0.08, g = 0.08, b = 0.12, a = 1 },
+                showText = false,
+                showLevel = false,
+                classColor = false,
+                reactionColor = false,
+                customFriendly = { r = 0.45, g = 0.55, b = 0.7 },   -- Steel blue
+                customNeutral  = { r = 0.6, g = 0.55, b = 0.7 },    -- Dusty lavender
+                customHostile  = { r = 0.55, g = 0.45, b = 0.65 },   -- Muted purple
+                targetScale = 1.2,
+                nonTargetAlpha = 0.6,
+                fontSize = 8,
+                nameText = {
+                    font = "Fritz Quadrata",
+                    fontSize = 9,
+                    fontFlags = "OUTLINE",
+                    color = { r = 0.78, g = 0.8, b = 0.85, a = 0.9 },
+                    show = true,
+                    xOffset = 0,
+                    yOffset = 2,
+                },
+            },
+            castbar = {
+                enabled = true,
+                width = 110,
+                height = 6,
+                yOffset = -1,
+                texture = "TP Flat",
+                backgroundColor = { r = 0.06, g = 0.06, b = 0.1, a = 0.9 },
+                normalColor = { r = 0.5, g = 0.6, b = 0.75 },          -- Cool blue-grey
+                uninterruptibleColor = { r = 0.4, g = 0.35, b = 0.5 }, -- Dark purple-grey
+                showSpellName = true,
+                showTimer = false,
+                showIcon = true,
+                iconSize = 10,
+                fontSize = 7,
+                borderSize = 1,
+            },
+            auras = {
+                enabled = true,
+                showDebuffs = true,
+                showBuffs = false,
+                onlyMine = true,
+                maxAuras = 4,
+                iconSize = 18,
+                iconSpacing = 1,
+                yOffset = 10,
+                showDuration = true,
+                showStacks = true,
+                showCooldownSpiral = false,
+                durationFontSize = 7,
+                borderSize = 1,
+                borderColor = { r = 0.2, g = 0.2, b = 0.25, a = 1 },
+            },
+            threat = {
+                enabled = true,
+                useGlow = false,
+                useColorChange = true,
+                glowAlpha = 0.4,
+                dps = {
+                    safe   = { r = 0.45, g = 0.55, b = 0.65 },  -- Slate blue
+                    medium = { r = 0.6, g = 0.55, b = 0.65 },   -- Lavender grey
+                    high   = { r = 0.65, g = 0.5, b = 0.6 },    -- Mauve
+                    danger = { r = 0.7, g = 0.4, b = 0.5 },     -- Dusty rose
+                },
+                tank = {
+                    safe   = { r = 0.45, g = 0.55, b = 0.65 },
+                    medium = { r = 0.6, g = 0.55, b = 0.65 },
+                    high   = { r = 0.65, g = 0.5, b = 0.6 },
+                    danger = { r = 0.7, g = 0.4, b = 0.5 },
+                },
+            },
+            target = {
+                enabled = true,
+                scale = 1.2,
+                nonTargetAlpha = 0.5,
+                borderColor = { r = 0.65, g = 0.7, b = 0.85, a = 0.8 },
+            },
+        },
+    },
+
+    --------------------------------------------------------------
     -- Glossy: Shiny gradient look with thin black border
     --------------------------------------------------------------
     glossy = {

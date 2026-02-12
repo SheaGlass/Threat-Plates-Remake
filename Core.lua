@@ -190,6 +190,7 @@ function Addon:CreateCustomFrame(plate)
     self:CreateThreatGlow(f)
     self:CreateTargetHighlight(f)
     self:CreateComboPoints(f)
+    self:CreateQuestIcon(f)
 
     -- Name text (UnitName returns secret for NPCs in 12.0, but SetText accepts secrets)
     local nt = db.healthbar.nameText or {}
@@ -334,6 +335,9 @@ function Addon:ConfigureFrame(frame, unitId)
     -- Combo points
     self:UpdateComboPoints(frame, unitId)
 
+    -- Quest icon
+    self:UpdateQuestIcon(frame, unitId)
+
     -- Auto-stack layout so elements don't overlap
     self:LayoutElements(frame)
 end
@@ -396,6 +400,7 @@ function Addon:LayoutElements(frame)
         frame.comboPoints:ClearAllPoints()
         frame.comboPoints:SetPoint("CENTER", anchor, "CENTER", cp_l.x, cp_l.y)
     end
+
 end
 
 ----------------------------------------------------------------------
@@ -539,16 +544,10 @@ local function SuppressBlizzardFrame(self)
         self:SetAlpha(0)
     end
 
-    -- Unregister events to stop Blizzard processing (but keep castBar
-    -- alive so we can read its shield state for interruptibility detection)
-    self:UnregisterAllEvents()
-
-    if CompactUnitFrame_UnregisterEvents then
-        CompactUnitFrame_UnregisterEvents(self)
-    end
-
-    -- Hide the Blizzard cast bar visually but let it keep receiving events
-    -- so its BorderShield state updates (used by ResolveNotInterruptible)
+    -- Hide the Blizzard cast bar visually but keep it processing events.
+    -- The castbar runs in untainted Blizzard code, which CAN read secret
+    -- values. It stores the result as a plain boolean in self.notInterruptible.
+    -- Our addon then reads that plain boolean.
     if self.castBar then
         self.castBar:SetAlpha(0)
     end
